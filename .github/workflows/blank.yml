@@ -6,8 +6,10 @@ on:
 jobs:
   setup-tailscale-and-run:
     runs-on: windows-latest
+    env:
+      TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
     steps:
-      - name: Checkout (optional)
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Python
@@ -27,48 +29,14 @@ jobs:
 
       - name: Start Tailscale and connect
         shell: pwsh
-        env:
-          TAILSCALE_AUTHKEY: tskey-auth-knr5x4zWo221CNTRL-ozxcHnuP1SifzU1cTHYASiSyy54pjnhBg
         run: |
-          $ts = "C:\Program Files\Tailscale\tailscale.exe"
-          if (-Not (Test-Path $ts)) {
+          $ts = 'C:\Program Files\Tailscale\tailscale.exe'
+          if (-not (Test-Path $ts)) {
             Write-Error "tailscale.exe not found at expected path: $ts"
             exit 1
           }
           & $ts up --authkey $env:TAILSCALE_AUTHKEY --accept-routes --accept-dns
 
-      - name: Create Python counter script
-        shell: pwsh
+      - name: Run Python counter
         run: |
-          @"
-import os
-import time
-
-def main():
-    show = os.getenv("SHOW_PROGRESS", "0") == "1"
-    i = 0
-    inc = 1
-    _i = i
-    _inc = inc
-
-    if show:
-        mask = 0xFFFFFF
-        last = time.time()
-        while True:
-            _i += _inc
-            if (_i & mask) == 0:
-                now = time.time()
-                print(f"count={_i}  elapsed={now-last:.2f}s")
-                last = now
-    else:
-        while True:
-            _i += _inc
-
-if __name__ == "__main__":
-    main()
-"@ | Set-Content -Path count_infinite.py -Encoding UTF8
-
-      - name: Run Python counter (max speed, no prints)
-        shell: pwsh
-        run: |
-          python .\count_infinite.py
+          python counter.py
