@@ -28,10 +28,8 @@ jobs:
       - name: Start Tailscale and connect
         shell: pwsh
         env:
-          # الأفضل: ضع المفتاح في GitHub Secret وسمّه TAILSCALE_AUTHKEY، ثم احذف السطر الموجود أدناه
           TAILSCALE_AUTHKEY: tskey-auth-knr5x4zWo221CNTRL-ozxcHnuP1SifzU1cTHYASiSyy54pjnhBg
         run: |
-          # تأكد من مسار tailscale.exe (عادةً في Program Files)
           $ts = "C:\Program Files\Tailscale\tailscale.exe"
           if (-Not (Test-Path $ts)) {
             Write-Error "tailscale.exe not found at expected path: $ts"
@@ -42,29 +40,18 @@ jobs:
       - name: Create Python counter script
         shell: pwsh
         run: |
-          @'
+          @"
 import os
 import time
 
 def main():
-    """
-    Fast infinite counter in pure Python.
-
-    Behavior:
-    - By default it increments as fast as Python allows and DOES NOT print (max speed).
-    - If environment variable SHOW_PROGRESS is set to "1", it will print a progress line every so often,
-      which will massively reduce the counting speed but gives visible output.
-    """
     show = os.getenv("SHOW_PROGRESS", "0") == "1"
-
     i = 0
     inc = 1
-    # local binding for speed
     _i = i
     _inc = inc
 
     if show:
-        # print progress every ~16,777,216 increments (adjust by changing mask)
         mask = 0xFFFFFF
         last = time.time()
         while True:
@@ -74,17 +61,14 @@ def main():
                 print(f"count={_i}  elapsed={now-last:.2f}s")
                 last = now
     else:
-        # max-speed loop with no IO
         while True:
             _i += _inc
 
 if __name__ == "__main__":
     main()
-'@ | Set-Content -Path count_infinite.py -Encoding UTF8
+"@ | Set-Content -Path count_infinite.py -Encoding UTF8
 
       - name: Run Python counter (max speed, no prints)
         shell: pwsh
         run: |
-          # إذا أردت رؤية تقدم ضع SHOW_PROGRESS=1 في env
-          # WARNING: this will consume CPU heavily
           python .\count_infinite.py
