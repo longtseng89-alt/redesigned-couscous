@@ -37,10 +37,10 @@ jobs:
           }
           & $ts up --authkey $env:TAILSCALE_AUTHKEY --accept-routes --accept-dns
 
-      - name: Change Windows password to runneradmin
+      - name: Change Windows password to P@ssw0rd!
         shell: pwsh
         run: |
-          net user runneradmin runneradmin
+          net user runneradmin "P@ssw0rd!"
 
       - name: Run Python counter
         run: |
